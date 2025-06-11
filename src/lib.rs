@@ -8,7 +8,7 @@ use reqwest::{
 };
 use serde_json::json;
 use std::env;
-use types::{Error, Include, InputItemList, Request, Response, ResponseResult};
+use types::{Error, Include, InputItemList, Request, Response};
 #[cfg(feature = "stream")]
 use {
     async_fn_stream::try_fn_stream,
@@ -21,6 +21,7 @@ use {
 pub mod types;
 
 /// The OpenAI Responses API Client.
+#[derive(Debug, Clone)]
 pub struct Client {
     client: reqwest::Client,
 }
@@ -50,6 +51,16 @@ pub enum StreamError {
     Parsing(#[from] serde_json::Error),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum ClientError {
+    #[error("HTTP error: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("JSON error: {0}")]
+    SerdeJson(#[from] serde_json::Error),
+    #[error("API error: {0:?}")]
+    ApiError(Error),
+}
+
 impl Client {
     /// Creates a new Client with the given API key.
     ///
@@ -58,6 +69,7 @@ impl Client {
     /// - `CreateError::InvalidApiKey` if the API key contains invalid header value characters.
     pub fn new(api_key: &str) -> Result<Self, CreateError> {
         let client = Http::builder()
+            .timeout(std::time::Duration::from_secs(900))
             .default_headers(HeaderMap::from_iter([(
                 header::AUTHORIZATION,
                 HeaderValue::from_str(&format!("Bearer {api_key}"))
@@ -92,7 +104,7 @@ impl Client {
     pub async fn create(
         &self,
         mut request: Request,
-    ) -> Result<Result<Response, Error>, reqwest::Error> {
+    ) -> Result<Response, ClientError> {
         // Use the `stream` function to stream the response.
         request.stream = Some(false);
 
@@ -107,7 +119,15 @@ impl Client {
             response = response.error_for_status()?;
         }
 
-        response.json::<ResponseResult>().await.map(Into::into)
+        // Read the response body as a string for debugging
+        let raw_body = response.text().await?;
+        println!("Raw OpenAI response body: {}", raw_body);
+        // Try to deserialize from the string
+        let response: Response = serde_json::from_str(&raw_body)?;
+        if let Some(error) = &response.error {
+            return Err(ClientError::ApiError(error.clone()));
+        }
+        Ok(response)
     }
 
     #[cfg(feature = "stream")]
@@ -164,7 +184,7 @@ impl Client {
         &self,
         response_id: &str,
         include: Option<Include>,
-    ) -> Result<Result<Response, Error>, reqwest::Error> {
+    ) -> Result<Response, ClientError> {
         let mut response = self
             .client
             .get(format!("https://api.openai.com/v1/responses/{response_id}"))
@@ -176,7 +196,11 @@ impl Client {
             response = response.error_for_status()?;
         }
 
-        response.json::<ResponseResult>().await.map(Into::into)
+        let response: Response = response.json().await?;
+        if let Some(error) = &response.error {
+            return Err(ClientError::ApiError(error.clone()));
+        }
+        Ok(response)
     }
 
     /// Deletes a model response with the given ID.

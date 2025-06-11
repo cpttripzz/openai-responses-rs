@@ -14,6 +14,8 @@ pub struct Response {
     pub created_at: DateTime<Utc>,
     /// Unique identifier for this Response.
     pub id: String,
+    /// The type of object returned (e.g., "response").
+    pub object: String,
     /// Details about why the response is incomplete.
     pub incomplete_details: Option<IncompleteDetails>,
     /// Inserts a system (or developer) message as the first item in the model's context.
@@ -68,6 +70,8 @@ pub struct Response {
     pub store: bool,
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids).
     pub user: Option<String>,
+    /// The error object, if any.
+    pub error: Option<Error>,
 }
 
 impl Response {
@@ -158,21 +162,4 @@ pub struct InputItemList {
     last_id: String,
     /// Whether there are more items available.
     has_more: bool,
-}
-
-#[allow(clippy::redundant_pub_crate)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum ResponseResult {
-    Ok(Box<Response>),
-    Err { error: Error },
-}
-
-impl From<ResponseResult> for Result<Response, Error> {
-    fn from(val: ResponseResult) -> Self {
-        match val {
-            ResponseResult::Err { error } => Err(error),
-            ResponseResult::Ok(response) => Ok(*response),
-        }
-    }
 }
