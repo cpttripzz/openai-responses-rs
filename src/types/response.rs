@@ -42,7 +42,7 @@ pub struct Response {
     /// Only available for o-series models.
     pub reasoning: ReasoningConfig,
     /// The status of the response generation.
-    pub status: ResponseStatus,
+    pub status: Option<ResponseStatus>,
     /// What sampling temperature to use, between 0 and 2.
     /// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
     /// We generally recommend altering this or `top_p` but not both.

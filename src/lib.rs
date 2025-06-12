@@ -121,7 +121,7 @@ impl Client {
 
         // Read the response body as a string for debugging
         let raw_body = response.text().await?;
-        println!("Raw OpenAI response body: {}", raw_body);
+        // println!("Raw OpenAI response body: {}", raw_body);
         // Try to deserialize from the string
         let response: Response = serde_json::from_str(&raw_body)?;
         if let Some(error) = &response.error {
