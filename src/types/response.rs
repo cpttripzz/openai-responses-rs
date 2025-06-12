@@ -4,7 +4,9 @@ use std::collections::HashMap;
 
 use crate::types::OutputContent;
 
-use super::{InputItem, OutputItem, ReasoningConfig, TextConfig, Tool, ToolChoice, Truncation};
+use super::{
+    InputItem, OutputItem, ReasoningConfig, ServiceTier, TextConfig, Tool, ToolChoice, Truncation,
+};
 
 /// The Response object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,6 +43,8 @@ pub struct Response {
     /// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
     /// Only available for o-series models.
     pub reasoning: ReasoningConfig,
+    /// Specifies the latency tier to use for processing the request.
+    pub service_tier: Option<ServiceTier>,
     /// The status of the response generation.
     pub status: Option<ResponseStatus>,
     /// What sampling temperature to use, between 0 and 2.

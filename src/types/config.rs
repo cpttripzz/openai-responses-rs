@@ -77,3 +77,13 @@ pub enum SummaryConfig {
     Concise,
     Detailed,
 }
+
+/// The latency tier to use for processing the request.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum ServiceTier {
+    #[default]
+    Auto,
+    Flex,
+    Default,
+}

@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use super::{
-    InputItem, MessageStatus, Model, ReasoningConfig, Role, TextConfig, Tool, ToolChoice,
-    Truncation,
+    InputItem, MessageStatus, Model, ReasoningConfig, Role, ServiceTier, TextConfig, Tool,
+    ToolChoice, Truncation,
 };
 
 /// The Request object.
@@ -32,6 +32,8 @@ pub struct Request {
     pub previous_response_id: Option<String>,
     /// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
     pub reasoning: Option<ReasoningConfig>,
+    /// Specifies the latency tier to use for processing the request.
+    pub service_tier: Option<ServiceTier>,
     /// Whether to store the generated model response for later retrieval via API.
     pub store: Option<bool>,
     /// If set to true, the model response data will be streamed to the client as it is generated using [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
@@ -81,6 +83,7 @@ impl Default for Request {
             tool_choice: None,
             temperature: None,
             instructions: None,
+            service_tier: None,
             model: Model::GPT4o,
             max_output_tokens: None,
             parallel_tool_calls: None,
@@ -182,6 +185,7 @@ pub enum ContentItem {
 
 /// The detail level of the image sent to the model.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ImageDetail {
     #[default]
     Auto,
